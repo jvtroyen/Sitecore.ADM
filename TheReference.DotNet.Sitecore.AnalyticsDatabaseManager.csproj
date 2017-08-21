@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Project was exported from assembly: C:\Projects\oz\Website\bin\Sitecore.AnalyticsDatabaseManager.dll-->
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{46063C3A-F5E5-4944-BDDD-936352CD76D7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>TheReference.DotNet.Sitecore.AnalyticsDatabaseManager</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <ApplicationVersion>3.0.0.0</ApplicationVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>TheReference.DotNet.Sitecore.AnalyticsDatabaseManager</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Sitecore.Analytics, Version=8.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sitecore.Analytics.NoReferences.8.1.160519\lib\NET45\Sitecore.Analytics.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Sitecore.Analytics.Processing, Version=8.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sitecore.Analytics.Processing.NoReferences.8.1.160519\lib\NET45\Sitecore.Analytics.Processing.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>lib\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>lib\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="Sitecore.Kernel, Version=8.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sitecore.Kernel.NoReferences.8.1.160519\lib\NET45\Sitecore.Kernel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Configuration\Settings.cs" />
+    <Compile Include="Pipelines\FilterInteraction\FilterInteractionArgs.cs" />
+    <Compile Include="Pipelines\FilterInteraction\FilterInteractionByFormData.cs" />
+    <Compile Include="Pipelines\FilterInteraction\FilterInteractionPipeline.cs" />
+    <Compile Include="Pipelines\FilterInteraction\FilterInteractionProcessor.cs" />
+    <Compile Include="Pipelines\FilterContact\FilterContactInList.cs" />
+    <Compile Include="Pipelines\FilterContact\FilterContactArgs.cs" />
+    <Compile Include="Pipelines\FilterContact\FilterContactPipeline.cs" />
+    <Compile Include="Pipelines\FilterContact\FilterContactByIdentifier.cs" />
+    <Compile Include="Pipelines\FilterContact\FilterContactProcessor.cs" />
+    <Compile Include="Pipelines\Initialize\RegisterRoutes.cs" />
+    <Compile Include="Core\DataClearingOptions.cs" />
+    <Compile Include="Core\AnalyticsIndexManager.cs" />
+    <Compile Include="Core\MongoDatabaseManager.cs" />
+    <Compile Include="Core\Helpers\MongoSettingsHelper.cs" />
+    <Compile Include="Core\Security\AuthorizedUserFilter.cs" />
+    <Compile Include="Controllers\ADMOperationsController.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Files\App_Config\Include\TheReferencePackages\AnalyticsDatabaseManager.config" />
+    <None Include="Items\core\sitecore\client\Applications\Launchpad\PageSettings\Buttons\Marketing\Analytics Database Manager\{5C689C36-6F68-4A5E-97F1-CD4E489E7677}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Index contacts\{18F06B6B-385C-43A9-94B3-AADAE00A92FC}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Remove contacts\{C3606A7C-7130-4498-9450-2863800BB4B3}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Remove devices\{0AC73CE8-0B62-40E9-8C79-98DE6330A8E8}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Remove old data\{04C069EC-C8B4-4E2C-B676-A6B1449EA8FC}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Remove userAgents\{63E0EA72-CE32-41B3-99B7-4E6F0C1A20E8}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\{9E16842C-3551-45A6-A79E-0A9CA74EF750}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\{7D9D2D53-531A-488D-8871-0D4A22DF47BD}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\{E4DB6525-3597-4BEB-B219-96143AC431D4}\en\1\xml" />
+    <None Include="Items\core\sitecore\client\Your Apps\ADM\{8D110F22-DF9E-467B-BCB7-12F5F4F532D1}\en\1\xml" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Files\sitecore\shell\client\Your Apps\ADM\TaskPage\TaskPage.js" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
