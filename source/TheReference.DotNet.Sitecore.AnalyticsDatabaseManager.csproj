@@ -89,7 +89,7 @@
     <Compile Include="AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Files\App_Config\Include\TheReferencePackages\AnalyticsDatabaseManager.config" />
+    <None Include="Files\App_Config\Include\zADM\AnalyticsDatabaseManager.config" />
     <None Include="Items\core\sitecore\client\Applications\Launchpad\PageSettings\Buttons\Marketing\Analytics Database Manager\{5C689C36-6F68-4A5E-97F1-CD4E489E7677}\en\1\xml" />
     <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Index contacts\{18F06B6B-385C-43A9-94B3-AADAE00A92FC}\en\1\xml" />
     <None Include="Items\core\sitecore\client\Your Apps\ADM\TaskPage\PageSettings\Tabs\Remove contacts\{C3606A7C-7130-4498-9450-2863800BB4B3}\en\1\xml" />

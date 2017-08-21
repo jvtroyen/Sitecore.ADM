@@ -18,7 +18,9 @@ The module was created and tested on Sitecore 8.1 update-3.
 
 The module is made available on the Sitecore marketplace as a Sitecore package. The package includes:
 
-- a config file that includes a pipeline processor
+- Sitecore items for the visual interface
+- a config file that includes a pipeline processor, settings and the default userAgents and userAgentParts that are identified as robots
+- a js-file
 - the dll
  
 ## History ##
