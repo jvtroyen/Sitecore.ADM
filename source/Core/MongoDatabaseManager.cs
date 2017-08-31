@@ -379,7 +379,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                 Context.Job.Status.Processed = 0L;
             }
 
-            if (!AllIndexesPresent(true, false, false))
+            if (AllIndexesPresent(true, false, false))
             {
                 long num = 0;
                 foreach (BsonDocument userAgent in all)
