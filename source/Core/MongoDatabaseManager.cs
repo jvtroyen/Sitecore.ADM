@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Configuration;
 using TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core.Helpers;
 using TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Pipelines.FilterContact;
@@ -366,6 +367,109 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             }
         }
 
+        public void RemoveRobotUserAgents()
+        {
+            var queries = new List<IMongoQuery>();
+            foreach (var part in RobotNameParts)
+            {
+                queries.Add(Query.Matches("UserAgentName", new BsonRegularExpression(new Regex(part, RegexOptions.IgnoreCase))));
+            }
+            foreach (var agent in RobotNames)
+            {
+                queries.Add(Query.EQ("UserAgentName", agent));
+            }
+
+            var query = Query.Or(queries);
+
+            var userAgents = this.Database.GetCollection("UserAgents")
+                .Find(query)
+                .SetFlags(QueryFlags.NoCursorTimeout);
+
+            var numAgents = userAgents.Count();
+            if (Context.Job != null)
+            {
+                Context.Job.Status.Total = numAgents;
+                Context.Job.Status.Messages.Add("Removing robot userAgents started. " + numAgents + " items to process ");
+                Context.Job.Status.Processed = 0L;
+            }
+
+            if (AllIndexesPresent(true, false, false))
+            {
+                var contacts = new HashSet<Guid>();
+                var devices = new HashSet<Guid>();
+
+                long num = 0;
+                long numInteractions = 0;
+                foreach (BsonDocument userAgent in userAgents)
+                {
+                    //Halt if job stopped from outside
+                    if (Context.Job.Status.State == Jobs.JobState.Finished)
+                    {
+                        Context.Job.Status.Messages.Add("Removing robot userAgents halted by user. " + num + " userAgents removed (" + numInteractions + " interactions).");
+                        return;
+                    }
+
+                    Guid asGuid = userAgent["_id"].AsGuid;
+
+                    BsonValue bsonUserAgent;
+                    if (userAgent.TryGetValue("UserAgentName", out bsonUserAgent))
+                    {
+                        string userAgentName = bsonUserAgent.AsString;
+                        try
+                        {
+                            //Remove all interactions with this userAgent
+                            numInteractions += this.RemoveInteractionsWithUserAgent(userAgentName, contacts, devices, numAgents, numInteractions);
+
+                            this.RemoveUserAgent(userAgentName);
+
+                            ++num;                            
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error("[Analytics Database Manager] Exception was thrown while removing userAgent " + asGuid, ex, this);
+                        }
+                        finally
+                        {
+                            IncrementProcessed();
+                        }
+                    }
+                }
+
+                if (Context.Job == null)
+                    return;
+
+                Context.Job.Status.Messages.Add("Removing robot userAgents ended. " + num + " userAgents were removed (" + numInteractions + " interactions)");
+                Context.Job.Status.Processed = 0L;
+
+                //Remove Contacts?
+                if (Context.Job != null)
+                {
+                    Context.Job.Status.Total = contacts.Count;
+                    Context.Job.Status.Processed = 0L;
+                    Context.Job.Status.Messages.Add("Removing contacts started. " + Context.Job.Status.Total + " items to process.");
+                }
+                long num3 = this.RemoveContacts(contacts, false);
+                if (Context.Job != null)
+                {
+                    Context.Job.Status.Messages.Add("Clearing the Contacts collection was finished. " + num3 + " items were removed ");
+                    Context.Job.Status.Processed = 0L;
+                }
+
+                //Remove Devices?
+                if (Context.Job != null)
+                {
+                    Context.Job.Status.Total = devices.Count;
+                    Context.Job.Status.Messages.Add("Removing devices started. " + Context.Job.Status.Total + " items to process.");
+                }
+                long num2 = this.RemoveDevices(devices);
+                if (Context.Job != null)
+                {
+                    Context.Job.Status.Messages.Add("Clearing the Devices collection was finished. " + num2 + " items were removed ");
+                    Context.Job.Status.Processed = 0L;
+                }
+            }
+        }
+
         public void RemoveUserAgentsWithoutInteractions()
         {
             MongoCursor<BsonDocument> all = this.Database.GetCollection("UserAgents")
@@ -431,9 +535,55 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             ++Context.Job.Status.Processed;
         }
 
+        private void IncrementTotal(long num)
+        {
+            if (Context.Job == null)
+                return;
+
+            Context.Job.Status.Total += num;
+        }
+
         private bool InteractionsExist(Guid contactId)
         {
             return (ulong)Database.GetCollection("Interactions").Find(Query.EQ("ContactId", (BsonValue)contactId)).SetLimit(1).SetFields((IMongoFields)Fields.Include("_id")).Count() > 0UL;
+        }
+
+        private long RemoveInteractionsWithUserAgent(string userAgentName, HashSet<Guid> contacts, HashSet<Guid> devices, long numAgents, long numInteractions)
+        {
+            var interactions = Database.GetCollection("Interactions").Find(Query.EQ("UserAgent", (BsonValue)userAgentName));
+            var returnValue = interactions.Count();
+            if (returnValue > 0)
+            {
+                Context.Job.Status.Messages[1] = "Removing robot userAgents started. " + numAgents + " items to process (" + (numInteractions+returnValue) + " interactions)";
+                IncrementTotal(returnValue);
+            }
+
+            foreach (BsonDocument interaction in interactions)
+            {
+                Guid asGuid = interaction["_id"].AsGuid;
+
+                try
+                {
+                    this.RemoveInteraction(asGuid);
+
+                    BsonValue bsonValue1;
+                    if (interaction.TryGetValue("ContactId", out bsonValue1))
+                        contacts.Add(bsonValue1.AsGuid);
+                    BsonValue bsonValue2;
+                    if (interaction.TryGetValue("DeviceId", out bsonValue2))
+                        devices.Add(bsonValue2.AsGuid);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("[Analytics Database Manager] Exception was thrown while removing userAgent " + asGuid, ex, this);
+                }
+                finally
+                {
+                    IncrementProcessed();
+                }
+            }
+
+            return returnValue;
         }
 
         private bool InteractionsExist(string userAgentName)
@@ -464,15 +614,21 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             BsonValue bsonUserAgent;
             if (interaction.TryGetValue("UserAgent", out bsonUserAgent))
             {
-                var userAgent = bsonUserAgent.ToString();
-                if (!string.IsNullOrEmpty(userAgent))
-                {
-                    userAgent = userAgent.ToLower();
-
-                    return RobotNameParts.Any(name => userAgent.Contains(name))
-                        || RobotNames.Contains(userAgent);
-                }
+                return IsRobotAgent(bsonUserAgent.ToString());
             }
+            return false;
+        }
+
+        private bool IsRobotAgent(string userAgent)
+        {
+            if (!string.IsNullOrEmpty(userAgent))
+            {
+                userAgent = userAgent.ToLower();
+
+                return RobotNameParts.Any(name => userAgent.Contains(name))
+                    || RobotNames.Contains(userAgent);
+            }
+
             return false;
         }
 

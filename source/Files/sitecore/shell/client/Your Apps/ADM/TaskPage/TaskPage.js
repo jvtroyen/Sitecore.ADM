@@ -16,7 +16,13 @@
             }
 
 			//Replace all [br]-tokens with actual breaks.
-			jQuery(".sc-text").each(function() { jQuery(this).html(jQuery(this).html().replace(/\[br\]/g,'<br/>')); });
+            jQuery(".sc-text").each(function () {
+                var html = jQuery(this).html();
+                html = html.replace(/\[br\]/g, '<br/>');
+                html = html.replace(/\[b\]/g, '<b>');
+                html = html.replace(/\[\/b\]/g, '</b>');
+                jQuery(this).html(html);
+            });
         },
 		haltAllJobs: function() {
             jQuery.ajax({
@@ -107,6 +113,22 @@
                 }
             });
         },
+
+		clearRobotUserAgentData: function () {
+		    app.ProgressMessageBarUA.removeMessages();
+		    jQuery.ajax({
+		        type: "POST",
+		        dataType: "json",
+		        url: "/sitecore/ADM/Operations/RemoveRobotUserAgents",
+		        success: function (data) {
+		            app.RemoveRobotUserAgentsButton.viewModel.disable();
+		            app.getStatus();
+		        },
+		        error: function (data) {
+		            app.ProgressMessageBarUA.addMessage("eror", "Error while starting clearing robot userAgents");
+		        }
+		    });
+		},
 
         indexContacts: function () {
             app.ProgressMessageBarIndex.removeMessages();
@@ -236,9 +258,11 @@
 
             if (data.isRunning) {
                 app.RemoveUserAgentsButton.viewModel.disable();
+                app.RemoveRobotUserAgentsButton.viewModel.disable();
                 //app.DatePicker1.viewModel.disable();
             } else if (!app.RemoveUserAgentsButton.viewModel.isEnabled()) {
                 app.RemoveUserAgentsButton.viewModel.enable();
+                app.RemoveRobotUserAgentsButton.viewModel.enable();
             }
         },
 

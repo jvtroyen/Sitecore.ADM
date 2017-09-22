@@ -306,6 +306,33 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Controllers
                     }
                 };
             JobOptions options = new JobOptions(JOBNAME_USERAGENTS, "ADM", Context.Site.Name, (object)new MongoDatabaseManager(), "RemoveUserAgentsWithoutInteractions");
+
+            options.AfterLife = TimeSpan.FromHours(1.0);
+            int num = 0;
+            options.EnableSecurity = num != 0;
+            JobManager.Start(options);
+
+            return new JsonResult()
+            {
+                Data = new
+                {
+                    result = "ok"
+                }
+            };
+        }
+
+        [System.Web.Mvc.HttpPost]
+        public ActionResult RemoveRobotUserAgents()
+        {
+            if (IsRunning())
+                return new JsonResult()
+                {
+                    Data = new
+                    {
+                        result = "Failed to start the operation. The job is already running."
+                    }
+                };
+            JobOptions options = new JobOptions(JOBNAME_USERAGENTS, "ADM", Context.Site.Name, (object)new MongoDatabaseManager(), "RemoveRobotUserAgents");
             options.AfterLife = TimeSpan.FromHours(1.0);
             int num = 0;
             options.EnableSecurity = num != 0;
