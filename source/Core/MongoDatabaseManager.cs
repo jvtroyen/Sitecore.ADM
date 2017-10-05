@@ -370,10 +370,13 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
         public void RemoveRobotUserAgents()
         {
             var queries = new List<IMongoQuery>();
+
+            //All useragents that CONTAIN specific words
             foreach (var part in RobotNameParts)
             {
                 queries.Add(Query.Matches("UserAgentName", new BsonRegularExpression(new Regex(part, RegexOptions.IgnoreCase))));
             }
+            //All useragents that MATCH a list
             foreach (var agent in RobotNames)
             {
                 queries.Add(Query.EQ("UserAgentName", agent));
@@ -400,6 +403,11 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
 
                 long num = 0;
                 long numInteractions = 0;
+
+                //Remove all interactions that have no useragent
+                numInteractions += RemoveInteractionsWithoutUserAgent(contacts, devices, numAgents, numInteractions);
+
+                //Remove all interactions for each useragent found
                 foreach (BsonDocument userAgent in userAgents)
                 {
                     //Halt if job stopped from outside
@@ -546,7 +554,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
         private bool InteractionsExist(Guid contactId)
         {
             return (ulong)Database.GetCollection("Interactions").Find(Query.EQ("ContactId", (BsonValue)contactId)).SetLimit(1).SetFields((IMongoFields)Fields.Include("_id")).Count() > 0UL;
-        }
+        }      
 
         private long RemoveInteractionsWithUserAgent(string userAgentName, HashSet<Guid> contacts, HashSet<Guid> devices, long numAgents, long numInteractions)
         {
@@ -556,8 +564,30 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             {
                 Context.Job.Status.Messages[1] = "Removing robot userAgents started. " + numAgents + " items to process (" + (numInteractions+returnValue) + " interactions)";
                 IncrementTotal(returnValue);
+
+                RemoveInteractions(interactions, contacts, devices);
             }
 
+            return returnValue;
+        }
+
+        private long RemoveInteractionsWithoutUserAgent(HashSet<Guid> contacts, HashSet<Guid> devices, long numAgents, long numInteractions)
+        {
+            var interactions = Database.GetCollection("Interactions").Find(Query.NotExists("UserAgent"));
+            var returnValue = interactions.Count();
+            if (returnValue > 0)
+            {
+                Context.Job.Status.Messages[1] = "Removing robot userAgents started. " + numAgents + " items to process (" + (numInteractions + returnValue) + " interactions)";
+                IncrementTotal(returnValue);
+
+                RemoveInteractions(interactions, contacts, devices);
+            }
+
+            return returnValue;
+        }
+
+        private void RemoveInteractions(MongoCursor<BsonDocument> interactions, HashSet<Guid> contacts, HashSet<Guid> devices)
+        {
             foreach (BsonDocument interaction in interactions)
             {
                 Guid asGuid = interaction["_id"].AsGuid;
@@ -582,8 +612,6 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                     IncrementProcessed();
                 }
             }
-
-            return returnValue;
         }
 
         private bool InteractionsExist(string userAgentName)
@@ -616,7 +644,9 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             {
                 return IsRobotAgent(bsonUserAgent.ToString());
             }
-            return false;
+            
+            //Interactions without useragent are bad, mkay
+            return true;
         }
 
         private bool IsRobotAgent(string userAgent)
@@ -629,7 +659,8 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                     || RobotNames.Contains(userAgent);
             }
 
-            return false;
+            //Empty useragents are bad, mkay
+            return true;
         }
 
         private bool IsInteractionRestricted(BsonDocument interaction)
