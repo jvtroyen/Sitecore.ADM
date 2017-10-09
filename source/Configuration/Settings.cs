@@ -38,6 +38,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Configuration
                         var arr = setting.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (var s in arr)
                         {
+                            //Lowercase, since this will be used in a case-INsensitive regex-match
                             var namePart = s.Trim().ToLower();
                             if (!string.IsNullOrEmpty(namePart))
                             {
@@ -66,7 +67,8 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Configuration
                         var arr = setting.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (var s in arr)
                         {
-                            var userAgentName = s.Trim().ToLower();
+                            //NO lowercase, as we will be searching the index for an exact match (faster)
+                            var userAgentName = s.Trim();
                             if (!string.IsNullOrEmpty(userAgentName))
                             {
                                 result.Add(userAgentName);
