@@ -369,26 +369,38 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
 
         public void RemoveRobotUserAgents()
         {
-            var queries = new List<IMongoQuery>();
-
             //All useragents that CONTAIN specific words
+            var queries = new List<IMongoQuery>();
             foreach (var part in RobotNameParts)
             {
                 queries.Add(Query.Matches("UserAgentName", new BsonRegularExpression(new Regex(part, RegexOptions.IgnoreCase))));
             }
-            //All useragents that MATCH a list
-            foreach (var agent in RobotNames)
-            {
-                queries.Add(Query.EQ("UserAgentName", agent));
-            }
-
             var query = Query.Or(queries);
 
+            var userAgentList = new List<string>();
             var userAgents = this.Database.GetCollection("UserAgents")
                 .Find(query)
                 .SetFlags(QueryFlags.NoCursorTimeout);
 
-            var numAgents = userAgents.Count();
+            foreach (BsonDocument userAgent in userAgents)
+            {
+                BsonValue bsonUserAgent;
+                if (userAgent.TryGetValue("UserAgentName", out bsonUserAgent))
+                {
+                    userAgentList.Add(bsonUserAgent.AsString);
+                }
+            }
+
+            //Now add all specific useragents
+            foreach (var s in RobotNames)
+            {
+                if (!userAgentList.Contains(s))
+                {
+                    userAgentList.Add(s);
+                }
+            }
+
+            var numAgents = userAgentList.Count();
             if (Context.Job != null)
             {
                 Context.Job.Status.Total = numAgents;
@@ -408,7 +420,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                 numInteractions += RemoveInteractionsWithoutUserAgent(contacts, devices, numAgents, numInteractions);
 
                 //Remove all interactions for each useragent found
-                foreach (BsonDocument userAgent in userAgents)
+                foreach (var userAgentName in userAgentList)
                 {
                     //Halt if job stopped from outside
                     if (Context.Job.Status.State == Jobs.JobState.Finished)
@@ -417,29 +429,22 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                         return;
                     }
 
-                    Guid asGuid = userAgent["_id"].AsGuid;
-
-                    BsonValue bsonUserAgent;
-                    if (userAgent.TryGetValue("UserAgentName", out bsonUserAgent))
+                    try
                     {
-                        string userAgentName = bsonUserAgent.AsString;
-                        try
-                        {
-                            //Remove all interactions with this userAgent
-                            numInteractions += this.RemoveInteractionsWithUserAgent(userAgentName, contacts, devices, numAgents, numInteractions);
+                        //Remove all interactions with this userAgent
+                        numInteractions += this.RemoveInteractionsWithUserAgent(userAgentName, contacts, devices, numAgents, numInteractions);
 
-                            this.RemoveUserAgent(userAgentName);
+                        this.RemoveUserAgent(userAgentName);
 
-                            ++num;                            
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Error("[Analytics Database Manager] Exception was thrown while removing userAgent " + asGuid, ex, this);
-                        }
-                        finally
-                        {
-                            IncrementProcessed();
-                        }
+                        ++num;                            
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("[Analytics Database Manager] Exception was thrown while removing userAgent '" + userAgentName + "'", ex, this);
+                    }
+                    finally
+                    {
+                        IncrementProcessed();
                     }
                 }
 
