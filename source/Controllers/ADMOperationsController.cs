@@ -86,12 +86,18 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Controllers
         public ActionResult GetRange()
         {
             MongoDatabaseManager mongoDatabaseManager = new MongoDatabaseManager();
+            var startDate = mongoDatabaseManager.GetStartDate();
+            var endDate = mongoDatabaseManager.GetEndDate();
+
+            var sStart = startDate.HasValue ? startDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+            var sEnd = endDate.HasValue ? endDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+
             return new JsonResult()
             {
                 Data = new
                 {
-                    startDate = mongoDatabaseManager.GetStartDate(),
-                    endDate = mongoDatabaseManager.GetEndDate(),
+                    startDate = sStart,
+                    endDate = sEnd,
                     count = mongoDatabaseManager.GetInteractionsCount()
                 },
                 JsonRequestBehavior = JsonRequestBehavior.AllowGet
