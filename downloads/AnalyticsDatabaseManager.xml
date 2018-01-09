@@ -3,7 +3,7 @@
     <metadata>
       <PackageName>Analytics Database Manager</PackageName>
       <Author>Jeroen Vantroyen</Author>
-      <Version>3.5.2</Version>
+      <Version>3.6.3</Version>
       <Revision />
       <License />
       <Comment />
@@ -32,7 +32,16 @@
       <SkipVersions>False</SkipVersions>
       <Converter>
         <ItemToEntryConverter>
-          <Transforms />
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Undefined</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
         </ItemToEntryConverter>
       </Converter>
       <Include />
