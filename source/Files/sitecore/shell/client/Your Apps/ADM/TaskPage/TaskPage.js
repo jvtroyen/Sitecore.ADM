@@ -48,13 +48,10 @@
                 data: {
                     'endDate': this.DatePicker1.viewModel.getDate().toISOString(),
                     'startDate': this.DatePickerFrom.viewModel.getDate().toISOString(),
-                    'filterInteractions': this.FilterInteractions.get("isChecked"),
                     "removeContacts": this.RemoveContacts.get("isChecked"),
-                    "filterContacts": this.FilterContacts.get("isChecked"),
                     "removeFormData": this.RemoveFormData.get("isChecked"),
                     "removeUserAgents": this.RemoveUserAgents.get("isChecked"),
-                    "removeDevices": this.RemoveDevices.get("isChecked"),
-                    "removeRobotsOnly": this.RemoveRobotsOnly.get("isChecked")
+                    "removeDevices": this.RemoveDevices.get("isChecked")
                 },
                 success: function (data) {
                     app.RemoveButton.viewModel.disable();

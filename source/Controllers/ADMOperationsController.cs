@@ -44,19 +44,12 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Controllers
             }
             int num1 = info.removeContacts ? 1 : 0;
             dataClearingOptions.RemoveContacts = num1 != 0;
-            int num2 = info.filterContacts ? 1 : 0;
-            dataClearingOptions.FilterContacts = num2 != 0;
             int num3 = info.removeFormData ? 1 : 0;
             dataClearingOptions.RemoveFormData = num3 != 0;
             int num4 = info.removeUserAgents ? 1 : 0;
             dataClearingOptions.RemoveUserAgents = num4 != 0;
-            int num5 = info.filterInteractions ? 1 : 0;
-            dataClearingOptions.FilterInteractions = num5 != 0;
             int num6 = info.removeDevices ? 1 : 0;
             dataClearingOptions.RemoveDevices = num6 != 0;
-            int num7 = info.removeRobotsOnly ? 1 : 0;
-            dataClearingOptions.RemoveRobotsOnly = num7 != 0;
-
 
             object[] parameters = new object[1];
             parameters[0] = dataClearingOptions;
@@ -258,7 +251,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Controllers
                 };
             JobOptions options = new JobOptions(JOBNAME_CONTACTS, "ADM", Context.Site.Name, (object)new MongoDatabaseManager(), "RemoveContactsWithoutInteractions", new object[1]
             {
-                (object)(info.filterContacts ? true : false)
+                (object)(false)
             });
             options.AfterLife = TimeSpan.FromHours(1.0);
             int num = 0;
@@ -384,19 +377,13 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Controllers
 
             public DateTime endDate { get; set; }
 
-            public bool filterInteractions { get; set; }
-
             public bool removeContacts { get; set; }
-
-            public bool filterContacts { get; set; }
 
             public bool removeFormData { get; set; }
 
             public bool removeUserAgents { get; set; }
 
             public bool removeDevices { get; set; }
-
-            public bool removeRobotsOnly { get; set; }
         }
     }
 }

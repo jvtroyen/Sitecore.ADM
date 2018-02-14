@@ -86,12 +86,9 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                 }
 
                 sb.AppendFormat(", removeContacts = {0}", options.RemoveContacts.ToString());
-                sb.AppendFormat(", filterContacts = {0}", options.FilterContacts.ToString());
-                sb.AppendFormat(", filterInteractions = {0}", options.FilterInteractions.ToString());
                 sb.AppendFormat(", removeUserAgents = {0}", options.RemoveUserAgents.ToString());
                 sb.AppendFormat(", removeDevices = {0}", options.RemoveDevices.ToString());
                 sb.AppendFormat(", removeFormData = {0}", options.RemoveFormData.ToString());
-                sb.AppendFormat(", removeRobotsOnly = {0}", options.RemoveRobotsOnly.ToString());
 
                 messages.Add(sb.ToString());
 
@@ -126,32 +123,23 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
 
                         try
                         {
-                            if ((!options.FilterInteractions || !IsInteractionRestricted(interaction))
-                                && (!options.RemoveRobotsOnly || IsRobotInteraction(interaction)))
-                            {
-                                RemoveInteraction(interaction["_id"].AsGuid);
-                                ++numInteractions;
+                            RemoveInteraction(interaction["_id"].AsGuid);
+                            ++numInteractions;
 
-                                if (formDataExists && options.RemoveFormData)
-                                    formData.Add(interaction["_id"].AsGuid);
+                            if (formDataExists && options.RemoveFormData)
+                                formData.Add(interaction["_id"].AsGuid);
 
-                                if (options.RemoveContacts)
-                                {
-                                    BsonValue bsonValue1;
-                                    if (interaction.TryGetValue("ContactId", out bsonValue1))
-                                        contacts.Add(bsonValue1.AsGuid);
-                                    BsonValue bsonValue2;
-                                    if (interaction.TryGetValue("DeviceId", out bsonValue2))
-                                        devices.Add(bsonValue2.AsGuid);
-                                    BsonValue bsonValue3;
-                                    if (interaction.TryGetValue("UserAgent", out bsonValue3))
-                                        userAgents.Add(bsonValue3.AsString);
-                                }
-                            }
-                            else
+                            if (options.RemoveContacts)
                             {
-                                //Skip logging for performance reasons
-                                //Log.Debug("[Analytics Database Manager] Interaction with id " + interaction["_id"].AsGuid + " was not removed due to the filterInteraction pipeline restrictions");
+                                BsonValue bsonValue1;
+                                if (interaction.TryGetValue("ContactId", out bsonValue1))
+                                    contacts.Add(bsonValue1.AsGuid);
+                                BsonValue bsonValue2;
+                                if (interaction.TryGetValue("DeviceId", out bsonValue2))
+                                    devices.Add(bsonValue2.AsGuid);
+                                BsonValue bsonValue3;
+                                if (interaction.TryGetValue("UserAgent", out bsonValue3))
+                                    userAgents.Add(bsonValue3.AsString);
                             }
                         }
                         catch (Exception ex)
@@ -194,7 +182,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                     Context.Job.Status.Processed = 0L;
                     Context.Job.Status.Messages.Add("Removing contacts started. " + Context.Job.Status.Total + " items to process.");
                 }
-                long num3 = this.RemoveContacts(contacts, options.FilterContacts);
+                long num3 = this.RemoveContacts(contacts, false);
                 if (Context.Job != null)
                 {
                     Context.Job.Status.Messages.Add("Clearing the Contacts collection was finished. " + num3 + " items were removed ");
@@ -417,7 +405,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                 long numInteractions = 0;
 
                 //Remove all interactions that have no useragent
-                numInteractions += RemoveInteractionsWithoutUserAgent(contacts, devices, numAgents, numInteractions);
+                numInteractions += RemoveInteractionsWithoutUserAgent(contacts, devices);
 
                 //Remove all interactions for each useragent found
                 foreach (var userAgentName in userAgentList)
@@ -432,7 +420,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                     try
                     {
                         //Remove all interactions with this userAgent
-                        numInteractions += this.RemoveInteractionsWithUserAgent(userAgentName, contacts, devices, numAgents, numInteractions);
+                        numInteractions += this.RemoveInteractionsWithUserAgent(userAgentName, contacts, devices);
 
                         this.RemoveUserAgent(userAgentName);
 
@@ -451,7 +439,7 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
                 if (Context.Job == null)
                     return;
 
-                Context.Job.Status.Messages.Add("Removing robot userAgents ended. " + num + " userAgents were removed (" + numInteractions + " interactions)");
+                Context.Job.Status.Messages.Add("Removing robot userAgents ended. " + num + " userAgents were checked (" + numInteractions + " interactions)");
                 Context.Job.Status.Processed = 0L;
 
                 //Remove Contacts?
@@ -561,13 +549,13 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             return (ulong)Database.GetCollection("Interactions").Find(Query.EQ("ContactId", (BsonValue)contactId)).SetLimit(1).SetFields((IMongoFields)Fields.Include("_id")).Count() > 0UL;
         }      
 
-        private long RemoveInteractionsWithUserAgent(string userAgentName, HashSet<Guid> contacts, HashSet<Guid> devices, long numAgents, long numInteractions)
+        private long RemoveInteractionsWithUserAgent(string userAgentName, HashSet<Guid> contacts, HashSet<Guid> devices)
         {
             var interactions = Database.GetCollection("Interactions").Find(Query.EQ("UserAgent", (BsonValue)userAgentName));
             var returnValue = interactions.Count();
             if (returnValue > 0)
             {
-                Context.Job.Status.Messages[1] = "Removing robot userAgents started. " + numAgents + " items to process (" + (numInteractions+returnValue) + " interactions)";
+                Context.Job.Status.Messages.Add("Removing " + returnValue + " interactions for userAgent '" + userAgentName + "'.");
                 IncrementTotal(returnValue);
 
                 RemoveInteractions(interactions, contacts, devices);
@@ -576,13 +564,13 @@ namespace TheReference.DotNet.Sitecore.AnalyticsDatabaseManager.Core
             return returnValue;
         }
 
-        private long RemoveInteractionsWithoutUserAgent(HashSet<Guid> contacts, HashSet<Guid> devices, long numAgents, long numInteractions)
+        private long RemoveInteractionsWithoutUserAgent(HashSet<Guid> contacts, HashSet<Guid> devices)
         {
             var interactions = Database.GetCollection("Interactions").Find(Query.NotExists("UserAgent"));
             var returnValue = interactions.Count();
             if (returnValue > 0)
             {
-                Context.Job.Status.Messages[1] = "Removing robot userAgents started. " + numAgents + " items to process (" + (numInteractions + returnValue) + " interactions)";
+                Context.Job.Status.Messages.Add("Removing " + returnValue + " interactions without userAgent.");
                 IncrementTotal(returnValue);
 
                 RemoveInteractions(interactions, contacts, devices);
